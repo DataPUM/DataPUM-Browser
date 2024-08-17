@@ -1,0 +1,67 @@
+// Copyright 2016 The Chromium Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+#include "ios/chrome/browser/ntp_tiles/model/ios_most_visited_sites_factory.h"
+
+#include "components/history/core/browser/top_sites.h"
+#include "components/image_fetcher/core/image_fetcher_impl.h"
+#include "components/image_fetcher/ios/ios_image_decoder_impl.h"
+#include "components/keyed_service/core/service_access_type.h"
+#include "components/ntp_tiles/icon_cacher_impl.h"
+#include "components/ntp_tiles/most_visited_sites.h"
+#include "ios/chrome/browser/favicon/model/favicon_service_factory.h"
+#include "ios/chrome/browser/favicon/model/ios_chrome_large_icon_service_factory.h"
+#include "ios/chrome/browser/history/model/top_sites_factory.h"
+#include "ios/chrome/browser/ntp_tiles/model/ios_popular_sites_factory.h"
+#include "ios/chrome/browser/shared/model/browser_state/chrome_browser_state.h"
+#include "ios/chrome/browser/supervised_user/model/supervised_user_service_factory.h"
+#include "services/data_decoder/public/cpp/data_decoder.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
+
+#include "build/branding_buildflags.h"  // Needed for REBEL_BROWSER.
+#if BUILDFLAG(REBEL_BROWSER)
+#include "components/ntp_tiles/custom_links_manager_impl.h"
+#include "ios/chrome/browser/history/model/history_service_factory.h"
+
+namespace {
+
+class IOSCustomLinksManagerFactory {
+ public:
+  static std::unique_ptr<ntp_tiles::CustomLinksManager> NewForBrowserState(
+      ChromeBrowserState* browser_state) {
+    history::HistoryService* history_service =
+        ios::HistoryServiceFactory::GetForBrowserState(
+            browser_state, ServiceAccessType::EXPLICIT_ACCESS);
+
+    return std::make_unique<ntp_tiles::CustomLinksManagerImpl>(
+        browser_state->GetPrefs(), history_service);
+  }
+};
+
+}  // namespace
+#endif
+
+std::unique_ptr<ntp_tiles::MostVisitedSites>
+IOSMostVisitedSitesFactory::NewForBrowserState(
+    ChromeBrowserState* browser_state) {
+  return std::make_unique<ntp_tiles::MostVisitedSites>(
+      browser_state->GetPrefs(),
+      SupervisedUserServiceFactory::GetForBrowserState(browser_state),
+      ios::TopSitesFactory::GetForBrowserState(browser_state),
+      IOSPopularSitesFactory::NewForBrowserState(browser_state),
+#if BUILDFLAG(REBEL_BROWSER)
+      IOSCustomLinksManagerFactory::NewForBrowserState(browser_state),
+#else
+      /*custom_links=*/nullptr,
+#endif
+      std::make_unique<ntp_tiles::IconCacherImpl>(
+          ios::FaviconServiceFactory::GetForBrowserState(
+              browser_state, ServiceAccessType::IMPLICIT_ACCESS),
+          IOSChromeLargeIconServiceFactory::GetForBrowserState(browser_state),
+          std::make_unique<image_fetcher::ImageFetcherImpl>(
+              image_fetcher::CreateIOSImageDecoder(),
+              browser_state->GetSharedURLLoaderFactory()),
+          /*data_decoder=*/nullptr),
+      false);
+}

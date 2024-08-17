@@ -1,0 +1,154 @@
+# Copyright 2022 Viasat Inc. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Arguments to be overridden by downstream forks.
+#
+# For more details on these arguments, see:
+# https://github.com/RebelBrowser/rebel/wiki#branding
+declare_args() {
+  # The full product name of your browser.
+  rebel_browser_name = "DataPUM Browser"
+
+  # The path-component name of your browser which corresponds to the path under
+  # //rebel/branding containing image assets for your fork. These are analogous
+  # to the resources under //chrome/app/theme/chromium.
+  rebel_browser_name_path_component = "datapum"
+
+  # The full name of your company.
+  rebel_browser_company = "DataPUM Corp."
+
+  # The path-component name of your company, used to create directories on disk.
+  # For example, the user's profile path will be under this path.
+  rebel_browser_company_path_component = "DataPUM"
+
+  # The contact email address for your browser.
+  rebel_browser_email = "browser@datapum.com"
+
+  # The website URL for your browser.
+  rebel_browser_website = "https://datapum.com/"
+
+  # The abbreviated product name to be used for the browser in path-component
+  # contexts that have a limited length limit.
+  rebel_browser_abbreviation = "DP"
+
+  # The URL schema to use for internal pages. This is an alias to the chrome://
+  # schema.
+  rebel_browser_schema = "datapum"
+
+  # The application package name, used for e.g. Android applications and macOS
+  # bundles.
+  rebel_package = "com.datapum.browser"
+
+  # The remote URL of your New Tab Page. The New Tab Page may make use of the
+  # Rebel Browser API (https://rebelbrowser.github.io/browser_api/) to render
+  # e.g. most-visited tiles, theme settings, autocomplete results, etc.
+  rebel_new_tab_page_url = "https://datapum.com/browser/ntp.html"
+
+  # The remote URL to be used for "help" links, e.g. a discussion forum or FAQ.
+  rebel_help_url = "https://datapum.com/"
+
+  # The remote URL containing the default set of New Tab Page tiles to display.
+  # It is recommended to bundle this list with your NTP application.
+  rebel_default_sites_url =
+      "https://datapum.com/browser/default_sites.json"
+
+  # The remote URL containing a JSON list of websites allowed to use the Rebel
+  # browser APIs.
+  rebel_browser_api_allow_list_url =
+      "https://datapum.com/browser/allowlist.json"
+
+  # The remote URLs for the Omaha instances used for upgrades, crash reporting,
+  # etc. These allow for separate public and internal servers, for situations
+  # where stable releases are provided on a public server and internal testing
+  # releases are provided on an internal server.
+  rebel_omaha_public_url = "https://omaha.rebel.com"
+  rebel_omaha_private_url = "https://omaha.internal.rebel.com"
+
+  # The remote URL to receive crash reports. Disabled by default.
+  rebel_crash_report_enabled = false
+  rebel_crash_report_url = "https://crash.rebel.com"
+
+  # The Sparkle (macOS upgrades) configuration. Disabled by default.
+  rebel_sparkle_enabled = false
+  rebel_sparkle_product_name = "DataPUM Browser"
+
+  # The Omaha (Windows upgrades) configuration.
+  rebel_windows_app_guid = "{8A69D345-D564-463c-AFF1-A69D9E530F96}"
+  rebel_windows_google_update_app_guid =
+      "{430FD4D0-B729-4F61-AA34-91526481799D}"
+}
+
+# Arguments to help with Chromium integration (i.e. not to be overridden).
+declare_args() {
+  is_rebel_based = true
+
+  rebel_browser_name_without_spaces =
+      string_replace("$rebel_browser_name", " ", "")
+  rebel_browser_name_with_underscores =
+      string_replace("$rebel_browser_name", " ", "_")
+
+  rebel_browser_branding_directory =
+      "//rebel/branding/$rebel_browser_name_path_component"
+
+  rebel_sparkle_appcast_url = "$rebel_omaha_public_url/sparkle/$rebel_sparkle_product_name/stable/appcast.xml"
+  rebel_sparkle_public_key =
+      "$rebel_browser_branding_directory/mac/chromium_pub.pem"
+
+  _rebel_windows_app_icon =
+      rebase_path("$rebel_browser_branding_directory/win/app.ico",
+                  "//chrome/app",
+                  "//rebel")
+  rebel_windows_app_icon =
+      string_replace("$_rebel_windows_app_icon", "/", "\\\\\\\\")
+
+  # Branding build flags used by //build/BUILD.gn.
+  rebel_branding_flags = [
+    "CHROMIUM_BRANDING=0",
+    "GOOGLE_CHROME_BRANDING=0",
+
+    "REBEL_BROWSER=1",
+    "REBEL_BROWSER_NAME=\"$rebel_browser_name\"",
+    "REBEL_BROWSER_NAME_WITHOUT_SPACES=\"$rebel_browser_name_without_spaces\"",
+    "REBEL_BROWSER_NAME_WITH_UNDERSCORES=\"$rebel_browser_name_with_underscores\"",
+    "REBEL_BROWSER_NAME_PATH=\"$rebel_browser_name_path_component\"",
+    "REBEL_BROWSER_COMPANY=\"$rebel_browser_company\"",
+    "REBEL_BROWSER_COMPANY_PATH=\"$rebel_browser_company_path_component\"",
+    "REBEL_BROWSER_ABBREVIATION=\"$rebel_browser_abbreviation\"",
+    "REBEL_BROWSER_SCHEMA=\"$rebel_browser_schema\"",
+    "REBEL_BROWSER_NEW_TAB_PAGE=\"$rebel_new_tab_page_url\"",
+    "REBEL_BROWSER_HELP=\"$rebel_help_url\"",
+    "REBEL_BROWSER_DEFAULT_SITES=\"$rebel_default_sites_url\"",
+    "REBEL_BROWSER_API_ALLOW_LIST=\"$rebel_browser_api_allow_list_url\"",
+    "REBEL_OMAHA_PUBLIC_URL=\"$rebel_omaha_public_url\"",
+    "REBEL_OMAHA_PRIVATE_URL=\"$rebel_omaha_private_url\"",
+    "REBEL_CRASH_REPORT_URL=\"$rebel_crash_report_url\"",
+    "REBEL_SPARKLE_PRODUCT_NAME=\"$rebel_sparkle_product_name\"",
+    "REBEL_WINDOWS_APP_GUID=\"$rebel_windows_app_guid\"",
+    "REBEL_WINDOWS_GOOGLE_UPDATE_APP_GUID=\"$rebel_windows_google_update_app_guid\"",
+    "REBEL_WINDOWS_APP_ICON=\"$rebel_windows_app_icon\"",
+  ]
+
+  if (rebel_crash_report_enabled) {
+    rebel_branding_flags += [ "REBEL_CRASH_REPORT_ENABLED=1" ]
+  } else {
+    rebel_branding_flags += [ "REBEL_CRASH_REPORT_ENABLED=0" ]
+  }
+
+  if (rebel_sparkle_enabled) {
+    rebel_branding_flags += [ "REBEL_SPARKLE_ENABLED=1" ]
+  } else {
+    rebel_branding_flags += [ "REBEL_SPARKLE_ENABLED=0" ]
+  }
+
+  # Arguments to be passed to //build/util/version.py to fill in Rebel-branded
+  # values while processing the BRANDING file.
+  rebel_process_version_arguments = [
+    "--eval",
+    "REBEL_BROWSER_NAME=\"${rebel_browser_name}\"",
+    "--eval",
+    "REBEL_BROWSER_COMPANY=\"${rebel_browser_company}\"",
+    "--eval",
+    "REBEL_PACKAGE=\"${rebel_package}\"",
+  ]
+}
