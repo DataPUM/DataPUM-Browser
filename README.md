@@ -1,7 +1,7 @@
 # Welcome to the DataPUM fork of the Rebel browser!
 
 
-#Rebel's own documentation:
+# Rebel's own documentation:
 
 Rebel aims to be an easily brandable fork of Chromium.
 
